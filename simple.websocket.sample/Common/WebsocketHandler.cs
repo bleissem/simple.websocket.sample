@@ -1,4 +1,4 @@
-﻿using PubSub.Extension;
+﻿using PubSub;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -43,13 +43,13 @@ namespace simple.websocket.sample.Common
         {
             if (_WebSocket == null) return;
 
-            this.Subscribe<WebSocketEvent>(this.OnWebSocketEvent);
+            Hub.Default.Subscribe<WebSocketEvent>(this.OnWebSocketEvent);
 
             var buffer = new byte[_Settings.ReceiveBufferSize];
             WebSocketReceiveResult result = await _WebSocket.ReceiveAsync(new ArraySegment<byte>(buffer), _Cancel.Token);
             while (!result.CloseStatus.HasValue)
             {
-                this.Publish<WebSocketEvent>(new WebSocketEvent()
+                Hub.Default.Publish<WebSocketEvent>(new WebSocketEvent()
                 {
                     SenderId = this.Id,
                     Buffer = new ArraySegment<byte>(buffer, 0, result.Count),
@@ -62,7 +62,7 @@ namespace simple.websocket.sample.Common
             }
             await _WebSocket.CloseAsync(result.CloseStatus.Value, result.CloseStatusDescription, _Cancel.Token);
 
-            this.Unsubscribe<WebSocketEvent>();
+            Hub.Default.Unsubscribe<WebSocketEvent>();
         }
 
         private async void OnWebSocketEvent(WebSocketEvent webSocketEvent)
